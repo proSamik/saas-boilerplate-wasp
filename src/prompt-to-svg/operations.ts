@@ -13,7 +13,7 @@ const OPENROUTER_API_URL = 'https://openrouter.ai/api/v1/chat/completions';
 const MODEL_MAP = {
   deepseek: 'deepseek/deepseek-r1:free',
   claude: 'anthropic/claude-3.7-sonnet',
-  openai: 'openai/chatgpt-4o-latest',
+  openai: 'openai/gpt-4o-mini'
 };
 
 // OpenRouter API response type
@@ -32,28 +32,57 @@ type OpenRouterErrorResponse = {
   };
 };
 
+// Helper function to auto-fix common SVG issues
+function autoFixSvg(svg: string): string {
+  let fixed = svg.trim();
+
+  // Remove any markdown code blocks if present
+  fixed = fixed.replace(/```svg/g, '').replace(/```/g, '');
+  
+  // Remove any explanatory text before or after the SVG
+  fixed = fixed.replace(/^[\s\S]*?(<svg)/i, '$1');
+  fixed = fixed.replace(/<\/svg>[\s\S]*$/i, '</svg>');
+
+  // Fix unclosed SVG tag
+  if (fixed.includes('<svg') && !fixed.includes('</svg>')) {
+    fixed += '</svg>';
+  }
+
+  // Fix missing quotes in attributes
+  fixed = fixed.replace(/(\w+)=(\w+)/g, '$1="$2"');
+
+  // Ensure proper SVG structure
+  if (!fixed.startsWith('<svg')) {
+    fixed = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" width="400" height="400">${fixed}</svg>`;
+  }
+
+  return fixed;
+}
+
 // Helper function to validate SVG content with more detailed checks
 function validateSvg(svg: string): { isValid: boolean; error?: string } {
   if (!svg) {
     return { isValid: false, error: 'SVG content is empty' };
   }
 
-  if (!svg.includes('<svg')) {
+  const autoFixed = autoFixSvg(svg);
+  
+  if (!autoFixed.includes('<svg')) {
     return { isValid: false, error: 'Missing <svg> tag' };
   }
 
-  if (!svg.includes('</svg>')) {
+  if (!autoFixed.includes('</svg>')) {
     return { isValid: false, error: 'Missing closing </svg> tag' };
   }
 
   // Check for basic structure
-  const basicStructure = /<svg[^>]*>.*<\/svg>/s.test(svg);
+  const basicStructure = /<svg[^>]*>.*<\/svg>/s.test(autoFixed);
   if (!basicStructure) {
     return { isValid: false, error: 'Invalid SVG structure' };
   }
 
   // Check for required attributes
-  if (!svg.includes('xmlns="http://www.w3.org/2000/svg"')) {
+  if (!autoFixed.includes('xmlns="http://www.w3.org/2000/svg"')) {
     return { isValid: false, error: 'Missing xmlns attribute' };
   }
 
@@ -127,7 +156,8 @@ export const generateSvgs: GenerateSvgs<{ prompt: string; model: string }, { svg
 7. Avoid external dependencies or images
 8. No scripts or event handlers
 9. Use relative coordinates within the 400x400 viewport
-10. Respond ONLY with valid SVG code, no explanations or markdown
+10. DO NOT include any markdown formatting or explanation text
+11. Output ONLY the raw SVG code
 
 Example valid response:
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" width="400" height="400">
@@ -140,8 +170,8 @@ Example valid response:
           }
         ],
         max_tokens: 1000,
-        temperature: 0.7,
-        top_p: 0.7,
+        temperature: 0.5, // Reduced temperature for more consistent output
+        top_p: 0.9,
         stream: false
       })
     });
@@ -154,19 +184,25 @@ Example valid response:
     const data = await response.json() as OpenRouterResponse;
     
     // Extract SVG code from the response
-    const baseSvg = data.choices[0].message.content;
+    let baseSvg = data.choices[0].message.content;
+
+    // Auto-fix common issues
+    baseSvg = autoFixSvg(baseSvg);
 
     // Validate the base SVG
     const validation = validateSvg(baseSvg);
     if (!validation.isValid) {
-      throw new Error(`Invalid SVG generated: ${validation.error}`);
+      console.warn('SVG validation failed:', validation.error);
+      // Try one more time with auto-fixing
+      baseSvg = sanitizeSvg(baseSvg);
+      const secondValidation = validateSvg(baseSvg);
+      if (!secondValidation.isValid) {
+        throw new Error(`Invalid SVG generated: ${secondValidation.error}`);
+      }
     }
 
-    // Sanitize the base SVG
-    const sanitizedSvg = sanitizeSvg(baseSvg);
-
     // Generate variations from the sanitized SVG
-    const svgs = generateSvgVariations(sanitizedSvg);
+    const svgs = generateSvgVariations(baseSvg);
 
     // Validate all variations
     for (const svg of svgs) {
