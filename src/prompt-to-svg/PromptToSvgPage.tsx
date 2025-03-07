@@ -3,6 +3,16 @@ import { generateSvgs, convertToGif } from 'wasp/client/operations';
 import { CgSpinner } from 'react-icons/cg';
 import { cn } from '../client/cn';
 
+// Add CSS for proper SVG display
+const svgStyles = `
+  .svg-container svg {
+    width: 100%;
+    height: 100%;
+    max-width: 100%;
+    max-height: 600px;
+  }
+`;
+
 // Example prompts for SVG generation
 const EXAMPLE_PROMPTS = {
   workflow: [
@@ -80,6 +90,9 @@ export default function PromptToSvgPage() {
 
   return (
     <div className='py-10 lg:mt-10'>
+      {/* Add style tag for SVG styling */}
+      <style dangerouslySetInnerHTML={{ __html: svgStyles }} />
+      
       <div className='mx-auto max-w-7xl px-6 lg:px-8'>
         <div className='mx-auto max-w-4xl text-center'>
           <h2 className='mt-2 text-4xl font-bold tracking-tight text-gray-900 sm:text-5xl dark:text-white'>
@@ -193,21 +206,42 @@ export default function PromptToSvgPage() {
 
             {/* SVG Display Grid */}
             {svgs.length > 0 && (
-              <div className='grid grid-cols-1 sm:grid-cols-2 gap-6'>
-                {svgs.map((svg, index) => (
-                  <div key={index} className='relative group'>
-                    <div className='aspect-square rounded-lg border border-gray-200 overflow-hidden bg-white dark:bg-gray-800'>
-                      <div dangerouslySetInnerHTML={{ __html: svg }} />
+              <div className='grid grid-cols-1 gap-6'>
+                {svgs.map((svg, index) => {
+                  // Check if SVG is valid
+                  const isValidSvg = svg.includes('<svg') && svg.includes('</svg>');
+                  
+                  return (
+                    <div key={index} className='relative group'>
+                      <div className='w-full rounded-lg border border-gray-200 overflow-hidden bg-white dark:bg-gray-800 p-4'>
+                        {isValidSvg ? (
+                          <div 
+                            dangerouslySetInnerHTML={{ __html: svg }} 
+                            className='w-full min-h-[400px] svg-container'
+                            style={{
+                              display: 'flex',
+                              justifyContent: 'center',
+                              alignItems: 'center'
+                            }}
+                          />
+                        ) : (
+                          <div className='w-full h-[400px] flex items-center justify-center text-red-500'>
+                            Invalid SVG content. Try generating again.
+                          </div>
+                        )}
+                      </div>
+                      {isValidSvg && (
+                        <button
+                          onClick={() => handleConvertToGif(svg)}
+                          disabled={isConverting}
+                          className='absolute bottom-4 left-1/2 transform -translate-x-1/2 py-2 px-4 bg-black/75 text-white rounded-full text-sm opacity-0 group-hover:opacity-100 transition-opacity'
+                        >
+                          {isConverting ? 'Converting...' : 'Convert to GIF'}
+                        </button>
+                      )}
                     </div>
-                    <button
-                      onClick={() => handleConvertToGif(svg)}
-                      disabled={isConverting}
-                      className='absolute bottom-4 left-1/2 transform -translate-x-1/2 py-2 px-4 bg-black/75 text-white rounded-full text-sm opacity-0 group-hover:opacity-100 transition-opacity'
-                    >
-                      {isConverting ? 'Converting...' : 'Convert to GIF'}
-                    </button>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </div>
