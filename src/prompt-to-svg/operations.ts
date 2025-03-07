@@ -216,22 +216,64 @@ export const generateSvgs: GenerateSvgs<
     throw new HttpError(500, 'OpenRouter API key is not configured');
   }
 
-  // Enhance prompt based on type
+  // Enhanced user prompts based on type
   const enhancedPrompt = type === 'workflow' 
-    ? `Create a professional workflow diagram with the following requirements:
-       - Use clean, modern design elements
-       - Include connection lines with arrows
-       - Add visual hierarchy with size and color
-       - Ensure elements are properly spaced
-       - Make it suitable for animation
-       Workflow description: ${prompt}`
-    : `Create a professional video element with the following requirements:
-       - Use smooth, polished shapes
-       - Add depth with gradients or shadows
-       - Make it suitable for animation
-       - Ensure high visual impact
-       - Keep it clean and modern
-       Element description: ${prompt}`;
+    ? `Design a professional, animated workflow diagram with these EXACT specifications:
+
+CONTENT:
+- Create a clear, modern workflow diagram showing: ${prompt}
+- Include 4-6 main components connected with directional arrows
+- Use a logical left-to-right or top-to-bottom flow
+
+STYLING:
+- Use a clean, modern design with rounded shapes
+- Apply a professional color scheme (blue/gray/accent color)
+- Use consistent spacing and alignment
+- Include appropriate icons within shapes
+- Add drop shadows for depth
+- Make line widths consistent (2-3px)
+
+TECHNICAL:
+- Create animation-ready elements with class names like "highlight", "rotate", "scale", or "morph"
+- Add all paths with proper stroke-dasharray for animation
+- Group related elements with <g> tags and descriptive class names
+- Add proper id attributes to elements that will be animated
+- Make all text readable and properly positioned
+- Ensure all circles have proper transform-origin for animation
+
+MUST INCLUDE:
+- At least one flow arrow with class="flow-arrow"
+- At least one circle with class="pulse-node"
+- At least one group with class="highlight"
+- Descriptive text labels for each component`
+
+    : `Design a professional, animated video element with these EXACT specifications:
+
+CONTENT:
+- Create a visually striking ${prompt}
+- Make it suitable for video overlays/transitions
+- Design for smooth, elegant animation
+
+STYLING:
+- Use gradients for depth and visual appeal
+- Apply subtle shadows and highlights
+- Create clean, vector shapes with smooth edges
+- Use a harmonious color palette
+- Maintain visual hierarchy with size/color
+
+TECHNICAL:
+- Create animation-ready elements with class names like "rotate", "scale", or "morph"
+- Add all paths with proper parameters for animation
+- Group related elements with <g> tags and descriptive class names
+- Use defs section for gradients, filters, and patterns
+- Include transform-origin attributes for rotating elements
+- Structure SVG for easy animation
+
+MUST INCLUDE:
+- At least one element with class="rotate"
+- At least one element with class="scale"
+- At least one path with class="morph"
+- Clean, professional design suitable for video production`;
 
   try {
     const response = await fetch(OPENROUTER_API_URL, {
@@ -247,65 +289,77 @@ export const generateSvgs: GenerateSvgs<
         messages: [
           {
             role: 'system',
-            content: `You are an expert SVG artist specializing in creating professional-grade animated graphics for video editing and workflow visualization. Follow these rules strictly:
+            content: `You are an expert SVG designer specializing in creating professional, animation-ready SVG graphics. Your SVG code must strictly adhere to these specifications:
 
-1. Required SVG Structure:
-   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" width="400" height="400">
-     <defs>
-       <!-- Define gradients, filters, and other effects here -->
-     </defs>
-     <g class="main">
-       <!-- Main content here -->
-     </g>
-   </svg>
-
-2. Design Guidelines:
-   - Use professional-grade visual elements
-   - Implement smooth gradients and shadows
-   - Create clean, modern designs
-   - Ensure high visual impact
-   - Make elements suitable for animation
-
-3. Technical Requirements:
-   - Include proper xmlns attribute
-   - Use viewBox="0 0 400 400"
-   - Set width="400" height="400"
-   - Group elements with <g> tags
-   - Use descriptive class names
-   - Close all paths properly
-   - Use relative coordinates
-
-4. Animation Support:
-   - Add animation-ready elements
-   - Use transform-origin attributes
-   - Implement smooth transitions
-   - Support motion paths
-   - Enable morphing capabilities
-
-5. Professional Features:
-   - Add drop shadows where appropriate
-   - Use gradient fills for depth
-   - Implement proper stroke widths
-   - Maintain visual hierarchy
-   - Ensure scalability
-
-6. Output Format:
-   - Provide clean, valid SVG code
-   - No explanations or markdown
-   - Include only the SVG content
-   - Ensure proper nesting
-   - Validate all attributes
-
-Example Response:
+CRITICAL SVG STRUCTURE REQUIREMENTS:
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" width="400" height="400">
   <defs>
-    <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="0%">
-      <stop offset="0%" style="stop-color:rgb(255,255,255);stop-opacity:1" />
-      <stop offset="100%" style="stop-color:rgb(200,200,200);stop-opacity:1" />
+    <!-- Define multiple gradients, filters, patterns here -->
+    <linearGradient id="grad1" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#3498db;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#2980b9;stop-opacity:1" />
     </linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="2" dy="2" stdDeviation="3" flood-color="#000000" flood-opacity="0.3"/>
+    </filter>
   </defs>
-  <g class="main">
-    <circle cx="200" cy="200" r="100" fill="url(#grad)" filter="drop-shadow(0 0 5px rgba(0,0,0,0.3))"/>
+  
+  <!-- Main content with proper grouping and classes -->
+  <g class="container">
+    <!-- Well-structured elements with classes for animation targeting -->
+    <g class="component">
+      <rect x="50" y="50" width="100" height="60" rx="10" fill="url(#grad1)" filter="url(#shadow)" class="scale"/>
+      <text x="100" y="85" text-anchor="middle" font-family="Arial" font-size="14" fill="#ffffff">Component</text>
+    </g>
+    
+    <!-- Arrows or connections with proper classes -->
+    <path d="M150 80 L200 80" stroke="#2c3e50" stroke-width="2" stroke-dasharray="5,5" class="flow-arrow"/>
+    
+    <!-- Nodes with proper classes -->
+    <circle cx="200" cy="80" r="10" fill="#e74c3c" class="pulse-node"/>
+  </g>
+</svg>
+
+CRITICAL TECHNICAL REQUIREMENTS:
+1. ALWAYS include xmlns="http://www.w3.org/2000/svg" attribute
+2. ALWAYS use viewBox="0 0 400 400" width="400" height="400"
+3. ALWAYS include <defs> with at least 2 gradients and 1 filter
+4. ALWAYS group elements with <g> tags and descriptive class names
+5. ALWAYS use class names that match animation targets (highlight, rotate, scale, flow-arrow, pulse-node, morph)
+6. ALWAYS use relative coordinates within the 400x400 viewport
+7. NEVER use external images or references
+8. NEVER include scripts or JavaScript
+9. NEVER include comments, explanations, or markdown in your response
+10. Output ONLY the valid SVG code and nothing else
+
+DESIGN PRINCIPLES:
+- Use appropriate spacing and alignment
+- Create clean, modern aesthetic
+- Add subtle shadows and depth
+- Use readable fonts and text sizing
+- Apply consistent stroke widths
+- Maintain proper hierarchy with size and color
+- Ensure all paths are properly formed and closed
+
+EXAMPLE RESPONSE (do not copy this example, create your own based on the user's request):
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" width="400" height="400">
+  <defs>
+    <linearGradient id="blueGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#3498db;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#2980b9;stop-opacity:1" />
+    </linearGradient>
+    <filter id="dropShadow">
+      <feDropShadow dx="2" dy="2" stdDeviation="2" flood-color="#000" flood-opacity="0.3"/>
+    </filter>
+  </defs>
+  <g class="container">
+    <rect x="50" y="50" width="300" height="300" rx="15" fill="#f5f5f5" stroke="#ddd" stroke-width="1"/>
+    <g class="component highlight">
+      <rect x="100" y="100" width="200" height="70" rx="10" fill="url(#blueGrad)" filter="url(#dropShadow)" class="scale"/>
+      <text x="200" y="140" text-anchor="middle" font-family="Arial" font-size="16" fill="white">Main Process</text>
+    </g>
+    <path d="M200 170 L200 220" stroke="#2c3e50" stroke-width="2" stroke-dasharray="5,5" class="flow-arrow"/>
+    <circle cx="200" cy="220" r="10" fill="#e74c3c" class="pulse-node"/>
   </g>
 </svg>`
           },
@@ -314,9 +368,9 @@ Example Response:
             content: enhancedPrompt
           }
         ],
-        max_tokens: 1500,
-        temperature: 0.7,
-        top_p: 0.9,
+        max_tokens: 2000,
+        temperature: 0.6,
+        top_p: 0.95,
         stream: false
       })
     });
