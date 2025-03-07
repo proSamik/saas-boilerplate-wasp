@@ -32,6 +32,24 @@ type OpenRouterErrorResponse = {
   };
 };
 
+// Animation presets for different use cases
+const ANIMATION_PRESETS = {
+  workflow: {
+    highlight: `<animate attributeName="stroke-width" values="2;4;2" dur="1s" repeatCount="indefinite"/>
+                <animate attributeName="stroke-opacity" values="0.6;1;0.6" dur="1s" repeatCount="indefinite"/>`,
+    flow: `<animate attributeName="stroke-dashoffset" from="0" to="20" dur="1s" repeatCount="indefinite"/>`,
+    pulse: `<animate attributeName="r" values="10;12;10" dur="1s" repeatCount="indefinite"/>
+            <animate attributeName="opacity" values="0.6;1;0.6" dur="1s" repeatCount="indefinite"/>`,
+    fadeIn: `<animate attributeName="opacity" from="0" to="1" dur="0.5s" fill="freeze"/>`
+  },
+  videoElements: {
+    glow: `<animate attributeName="filter" values="blur(0px);blur(2px);blur(0px)" dur="2s" repeatCount="indefinite"/>`,
+    rotate: `<animateTransform attributeName="transform" type="rotate" from="0 200 200" to="360 200 200" dur="3s" repeatCount="indefinite"/>`,
+    morph: `<animate attributeName="d" dur="2s" repeatCount="indefinite"/>`,
+    scale: `<animateTransform attributeName="transform" type="scale" values="1;1.2;1" dur="1s" repeatCount="indefinite"/>`
+  }
+};
+
 // Helper function to auto-fix common SVG issues
 function autoFixSvg(svg: string): string {
   let fixed = svg.trim();
@@ -114,14 +132,106 @@ function sanitizeSvg(svg: string): string {
   return sanitized;
 }
 
+// Function to generate SVG variations with different styles and animations
+function generateSvgVariations(baseSvg: string, type: 'workflow' | 'videoElement'): string[] {
+  // Helper function to add animation to SVG
+  const addAnimation = (svg: string, animation: string, target: string): string => {
+    return svg.replace(`<${target}`, `<${target}>${animation}`);
+  };
+
+  let enhancedSvg = baseSvg;
+
+  if (type === 'workflow') {
+    // Add drop shadow for better visibility
+    enhancedSvg = enhancedSvg.replace(
+      '<svg',
+      '<svg style="filter: drop-shadow(0 0 3px rgba(0,0,0,0.2))"'
+    );
+
+    // Add flow animation to paths (arrows and connections)
+    enhancedSvg = addAnimation(
+      enhancedSvg,
+      ANIMATION_PRESETS.workflow.flow,
+      'path'
+    );
+
+    // Add pulse animation to circles (nodes)
+    enhancedSvg = addAnimation(
+      enhancedSvg,
+      ANIMATION_PRESETS.workflow.pulse,
+      'circle'
+    );
+
+    // Add highlight animation to important groups
+    enhancedSvg = addAnimation(
+      enhancedSvg,
+      ANIMATION_PRESETS.workflow.highlight,
+      'g[class*="highlight"]'
+    );
+
+    // Add fade-in animation to text elements
+    enhancedSvg = addAnimation(
+      enhancedSvg,
+      ANIMATION_PRESETS.workflow.fadeIn,
+      'text'
+    );
+  } else {
+    // Add glow effect for video elements
+    enhancedSvg = enhancedSvg.replace(
+      '<svg',
+      '<svg style="filter: drop-shadow(0 0 5px rgba(255,255,255,0.5))"'
+    );
+
+    // Add rotation animation to specific groups
+    enhancedSvg = addAnimation(
+      enhancedSvg,
+      ANIMATION_PRESETS.videoElements.rotate,
+      'g[class*="rotate"]'
+    );
+
+    // Add scale animation to specific elements
+    enhancedSvg = addAnimation(
+      enhancedSvg,
+      ANIMATION_PRESETS.videoElements.scale,
+      'g[class*="scale"]'
+    );
+
+    // Add morphing animation to paths
+    enhancedSvg = addAnimation(
+      enhancedSvg,
+      ANIMATION_PRESETS.videoElements.morph,
+      'path[class*="morph"]'
+    );
+  }
+
+  return [enhancedSvg];
+}
+
 // Function to generate SVG using OpenRouter API
-export const generateSvgs: GenerateSvgs<{ prompt: string; model: string }, { svgs: string[] }> = async (
-  { prompt, model },
-  context
-) => {
+export const generateSvgs: GenerateSvgs<
+  { prompt: string; model: string; type: 'workflow' | 'videoElement' },
+  { svgs: string[] }
+> = async ({ prompt, model, type }, context) => {
   if (!process.env.OPENROUTER_API_KEY) {
     throw new HttpError(500, 'OpenRouter API key is not configured');
   }
+
+  // Enhance prompt based on type
+  const enhancedPrompt = type === 'workflow' 
+    ? `Create a professional workflow diagram with the following requirements:
+       - Use clean, modern design elements
+       - Include connection lines with arrows
+       - Add visual hierarchy with size and color
+       - Ensure elements are properly spaced
+       - Make it suitable for animation
+       Workflow description: ${prompt}`
+    : `Create a professional video element with the following requirements:
+       - Use smooth, polished shapes
+       - Add depth with gradients or shadows
+       - Make it suitable for animation
+       - Ensure high visual impact
+       - Keep it clean and modern
+       Element description: ${prompt}`;
 
   try {
     const response = await fetch(OPENROUTER_API_URL, {
@@ -137,40 +247,75 @@ export const generateSvgs: GenerateSvgs<{ prompt: string; model: string }, { svg
         messages: [
           {
             role: 'system',
-            content: `You are an expert SVG artist specializing in creating clean, valid SVG code. Follow these rules strictly:
+            content: `You are an expert SVG artist specializing in creating professional-grade animated graphics for video editing and workflow visualization. Follow these rules strictly:
 
-1. ALWAYS include these required attributes:
-   - xmlns="http://www.w3.org/2000/svg"
-   - viewBox="0 0 400 400"
-   - width="400" height="400"
-
-2. Basic structure must be:
+1. Required SVG Structure:
    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" width="400" height="400">
-     <!-- content here -->
+     <defs>
+       <!-- Define gradients, filters, and other effects here -->
+     </defs>
+     <g class="main">
+       <!-- Main content here -->
+     </g>
    </svg>
 
-3. Use only valid SVG elements and attributes
-4. Keep designs simple and suitable for animation
-5. Ensure all paths are properly closed
-6. Use descriptive class names for elements
-7. Avoid external dependencies or images
-8. No scripts or event handlers
-9. Use relative coordinates within the 400x400 viewport
-10. DO NOT include any markdown formatting or explanation text
-11. Output ONLY the raw SVG code
+2. Design Guidelines:
+   - Use professional-grade visual elements
+   - Implement smooth gradients and shadows
+   - Create clean, modern designs
+   - Ensure high visual impact
+   - Make elements suitable for animation
 
-Example valid response:
+3. Technical Requirements:
+   - Include proper xmlns attribute
+   - Use viewBox="0 0 400 400"
+   - Set width="400" height="400"
+   - Group elements with <g> tags
+   - Use descriptive class names
+   - Close all paths properly
+   - Use relative coordinates
+
+4. Animation Support:
+   - Add animation-ready elements
+   - Use transform-origin attributes
+   - Implement smooth transitions
+   - Support motion paths
+   - Enable morphing capabilities
+
+5. Professional Features:
+   - Add drop shadows where appropriate
+   - Use gradient fills for depth
+   - Implement proper stroke widths
+   - Maintain visual hierarchy
+   - Ensure scalability
+
+6. Output Format:
+   - Provide clean, valid SVG code
+   - No explanations or markdown
+   - Include only the SVG content
+   - Ensure proper nesting
+   - Validate all attributes
+
+Example Response:
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" width="400" height="400">
-  <circle cx="200" cy="200" r="100" fill="currentColor"/>
+  <defs>
+    <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:rgb(255,255,255);stop-opacity:1" />
+      <stop offset="100%" style="stop-color:rgb(200,200,200);stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  <g class="main">
+    <circle cx="200" cy="200" r="100" fill="url(#grad)" filter="drop-shadow(0 0 5px rgba(0,0,0,0.3))"/>
+  </g>
 </svg>`
           },
           {
             role: 'user',
-            content: `Generate a simple SVG based on this prompt: ${prompt}`
+            content: enhancedPrompt
           }
         ],
-        max_tokens: 1000,
-        temperature: 0.5, // Reduced temperature for more consistent output
+        max_tokens: 1500,
+        temperature: 0.7,
         top_p: 0.9,
         stream: false
       })
@@ -201,8 +346,8 @@ Example valid response:
       }
     }
 
-    // Generate variations from the sanitized SVG
-    const svgs = generateSvgVariations(baseSvg);
+    // Generate variations with animations based on type
+    const svgs = generateSvgVariations(baseSvg, type);
 
     // Validate all variations
     for (const svg of svgs) {
@@ -305,39 +450,4 @@ export const convertToGif: ConvertToGif<{ svg: string }, { gifUrl: string }> = a
     console.error('Error converting to GIF:', error);
     throw new HttpError(500, `Failed to convert to GIF: ${error.message}`);
   }
-};
-
-// Helper function to generate SVG variations
-function generateSvgVariations(baseSvg: string): string[] {
-  // Create 4 variations of the SVG by applying different transformations
-  const variations: string[] = [];
-  
-  // Base variation
-  variations.push(baseSvg);
-  
-  // Rotated variation
-  variations.push(
-    baseSvg.replace(
-      '<svg',
-      '<svg style="transform: rotate(90deg)"'
-    )
-  );
-  
-  // Mirrored variation
-  variations.push(
-    baseSvg.replace(
-      '<svg',
-      '<svg style="transform: scaleX(-1)"'
-    )
-  );
-  
-  // Combined transformation
-  variations.push(
-    baseSvg.replace(
-      '<svg',
-      '<svg style="transform: rotate(180deg) scaleY(-1)"'
-    )
-  );
-  
-  return variations;
-} 
+}; 
