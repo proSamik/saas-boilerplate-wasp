@@ -4,14 +4,24 @@ import { CgSpinner } from 'react-icons/cg';
 import { cn } from '../client/cn';
 
 // Example prompts for SVG generation
-const EXAMPLE_PROMPTS = [
-  'A minimalist mountain landscape',
-  'Abstract geometric patterns',
-  'A cute cartoon animal',
-  'Flowing organic shapes',
-  'Tech-inspired circuit design',
-  'Nature-inspired mandala',
-];
+const EXAMPLE_PROMPTS = {
+  workflow: [
+    'A user authentication flow diagram',
+    'API request-response cycle',
+    'Database CRUD operations flow',
+    'Microservices architecture',
+    'CI/CD pipeline visualization',
+    'Event-driven system workflow',
+  ],
+  videoElement: [
+    'Animated arrow pointing right',
+    'Pulsing highlight circle',
+    'Morphing shape transition',
+    'Loading spinner animation',
+    'Progress bar with glow',
+    'Animated checkmark',
+  ],
+};
 
 // Available AI models
 const AI_MODELS = [
@@ -20,9 +30,12 @@ const AI_MODELS = [
   { id: 'openai', name: 'OpenAI', description: 'GPT-4 powered' },
 ];
 
+type GenerationType = 'workflow' | 'videoElement';
+
 export default function PromptToSvgPage() {
   const [prompt, setPrompt] = useState('');
   const [selectedModel, setSelectedModel] = useState(AI_MODELS[0]);
+  const [selectedType, setSelectedType] = useState<GenerationType>('videoElement');
   const [svgs, setSvgs] = useState<string[]>([]);
   const [isGenerating, setIsGenerating] = useState(false);
   const [isConverting, setIsConverting] = useState(false);
@@ -32,7 +45,8 @@ export default function PromptToSvgPage() {
       setIsGenerating(true);
       const response = await generateSvgs({
         prompt,
-        model: selectedModel.id
+        model: selectedModel.id,
+        type: selectedType
       });
       setSvgs(response.svgs);
     } catch (error: any) {
@@ -73,11 +87,44 @@ export default function PromptToSvgPage() {
           </h2>
         </div>
         <p className='mx-auto mt-6 max-w-2xl text-center text-lg leading-8 text-gray-600 dark:text-white'>
-          Generate beautiful SVG art from text prompts using AI. Choose your preferred AI model and convert the results to GIF!
+          Generate professional animated SVGs for video editing and workflow visualization. Choose your type and preferred AI model!
         </p>
 
         <div className='my-8 border rounded-3xl border-gray-900/10 dark:border-gray-100/10'>
           <div className='sm:w-[90%] md:w-[70%] lg:w-[50%] py-10 px-6 mx-auto my-8 space-y-10'>
+            {/* Type Selection */}
+            <div className='flex flex-col gap-4'>
+              <label className='text-sm font-semibold text-gray-700 dark:text-gray-300'>
+                Choose Generation Type
+              </label>
+              <div className='grid grid-cols-1 sm:grid-cols-2 gap-4'>
+                <button
+                  onClick={() => setSelectedType('workflow')}
+                  className={cn(
+                    'p-4 rounded-lg border text-left transition-all',
+                    selectedType === 'workflow'
+                      ? 'border-yellow-500 bg-yellow-50 dark:bg-yellow-900/20'
+                      : 'border-gray-200 hover:border-yellow-300'
+                  )}
+                >
+                  <div className='font-medium text-gray-900 dark:text-white'>Workflow</div>
+                  <div className='text-sm text-gray-500 dark:text-gray-400'>System diagrams & process flows</div>
+                </button>
+                <button
+                  onClick={() => setSelectedType('videoElement')}
+                  className={cn(
+                    'p-4 rounded-lg border text-left transition-all',
+                    selectedType === 'videoElement'
+                      ? 'border-yellow-500 bg-yellow-50 dark:bg-yellow-900/20'
+                      : 'border-gray-200 hover:border-yellow-300'
+                  )}
+                >
+                  <div className='font-medium text-gray-900 dark:text-white'>Video Element</div>
+                  <div className='text-sm text-gray-500 dark:text-gray-400'>Animated graphics & effects</div>
+                </button>
+              </div>
+            </div>
+
             {/* Model Selection */}
             <div className='flex flex-col gap-4'>
               <label className='text-sm font-semibold text-gray-700 dark:text-gray-300'>
@@ -110,11 +157,13 @@ export default function PromptToSvgPage() {
               <textarea
                 value={prompt}
                 onChange={(e) => setPrompt(e.target.value)}
-                placeholder='Describe the SVG you want to generate...'
+                placeholder={selectedType === 'workflow' 
+                  ? 'Describe the workflow or system diagram you want to generate...'
+                  : 'Describe the video element or animation you want to generate...'}
                 className='w-full h-32 p-3 rounded-lg border border-gray-200 bg-white dark:bg-gray-800 dark:border-gray-700'
               />
               <div className='flex flex-wrap gap-2'>
-                {EXAMPLE_PROMPTS.map((examplePrompt) => (
+                {EXAMPLE_PROMPTS[selectedType].map((examplePrompt) => (
                   <button
                     key={examplePrompt}
                     onClick={() => setPrompt(examplePrompt)}
