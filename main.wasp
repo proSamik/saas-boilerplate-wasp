@@ -345,3 +345,21 @@ job sendNewsletter {
   entities: [User]
 }
 //#endregion
+
+//#region Prompt to SVG
+route PromptToSvgRoute { path: "/prompt-to-svg", to: PromptToSvgPage }
+page PromptToSvgPage {
+  authRequired: true,
+  component: import PromptToSvgPage from "@src/prompt-to-svg/PromptToSvgPage"
+}
+
+action generateSvgs {
+  fn: import { generateSvgs } from "@src/prompt-to-svg/operations",
+  entities: [User]
+}
+
+action convertToGif {
+  fn: import { convertToGif } from "@src/prompt-to-svg/operations",
+  entities: [User]
+}
+//#endregion
