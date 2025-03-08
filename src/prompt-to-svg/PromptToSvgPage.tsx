@@ -44,7 +44,7 @@ type GenerationType = 'workflow' | 'videoElement';
 
 export default function PromptToSvgPage() {
   const [prompt, setPrompt] = useState('');
-  const [selectedModel, setSelectedModel] = useState(AI_MODELS[0]);
+  const [selectedModel, setSelectedModel] = useState(AI_MODELS[1]); // Set Claude as default
   const [selectedType, setSelectedType] = useState<GenerationType>('videoElement');
   const [svgs, setSvgs] = useState<string[]>([]);
   const [isGenerating, setIsGenerating] = useState(false);
