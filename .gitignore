@@ -9,3 +9,10 @@ node_modules/
 # Don't ignore example dotenv files.
 !.env.example
 !.env.*.example
+
+# macOS system files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
