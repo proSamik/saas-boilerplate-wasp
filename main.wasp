@@ -363,3 +363,47 @@ action convertToGif {
   entities: [User]
 }
 //#endregion
+
+//#region TikTok Integration
+route TikTokIntegrationRoute { path: "/tiktok", to: TikTokIntegrationPage }
+page TikTokIntegrationPage {
+  authRequired: true,
+  component: import TikTokIntegrationPage from "@src/tiktok/TikTokIntegrationPage"
+}
+
+route TikTokCallbackRoute { path: "/tiktok/callback", to: TikTokCallbackPage }
+page TikTokCallbackPage {
+  authRequired: true,
+  component: import TikTokCallbackPage from "@src/tiktok/TikTokCallbackPage"
+}
+
+action connectTikTokAccount {
+  fn: import { connectTikTokAccount } from "@src/tiktok/operations",
+  entities: [User, TikTokAccount]
+}
+
+action disconnectTikTokAccount {
+  fn: import { disconnectTikTokAccount } from "@src/tiktok/operations",
+  entities: [User, TikTokAccount]
+}
+
+action createTikTokPost {
+  fn: import { createTikTokPost } from "@src/tiktok/operations",
+  entities: [User, TikTokAccount, TikTokPost, File]
+}
+
+query getTikTokAuthUrl {
+  fn: import { getTikTokAuthUrl } from "@src/tiktok/operations",
+  entities: [User]
+}
+
+query getCurrentUserTikTokAccount {
+  fn: import { getCurrentUserTikTokAccount } from "@src/tiktok/operations",
+  entities: [User, TikTokAccount]
+}
+
+query getTikTokPostsByUser {
+  fn: import { getTikTokPostsByUser } from "@src/tiktok/operations",
+  entities: [User, TikTokAccount, TikTokPost]
+}
+//#endregion
