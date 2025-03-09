@@ -27,7 +27,7 @@ export function validateSvg(svg: string): { isValid: boolean; error?: string } {
   }
 
   // Check for basic structure
-  const basicStructure = /<svg[^>]*>.*<\/svg>/s.test(autoFixed);
+  const basicStructure = /<svg[^>]*>[\s\S]*<\/svg>/.test(autoFixed);
   if (!basicStructure) {
     return { isValid: false, error: 'Invalid SVG structure' };
   }
@@ -297,7 +297,7 @@ export async function convertSvgToGif(svg: string): Promise<string> {
     });
 
     // Capture multiple frames for animation (5 frames at 200ms intervals)
-    const frames = [];
+    const frames: Buffer[] = [];
     for (let i = 0; i < 5; i++) {
       // Delay to allow animations to progress
       await new Promise(resolve => setTimeout(resolve, 200));
@@ -307,7 +307,7 @@ export async function convertSvgToGif(svg: string): Promise<string> {
         type: 'png',
         omitBackground: true,
         encoding: 'binary'
-      });
+      }) as Buffer;
       
       frames.push(frameData);
     }
@@ -317,7 +317,7 @@ export async function convertSvgToGif(svg: string): Promise<string> {
     browser = null;
 
     // Use sharp to create an animated GIF from the frames
-    const frameBuffers = frames.map(frame => Buffer.from(frame));
+    const frameBuffers = frames;
     const firstFrame = await sharp(frameBuffers[0]).metadata();
     
     // Use the first frame to determine dimensions
