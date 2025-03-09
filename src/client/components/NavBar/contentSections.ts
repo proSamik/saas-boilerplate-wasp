@@ -6,6 +6,7 @@ export const appNavigationItems: NavigationItem[] = [
   { name: 'AI Scheduler (Demo App)', to: routes.DemoAppRoute.to },
   { name: 'Prompt to SVG', to: routes.PromptToSvgRoute.to },
   { name: 'File Upload (AWS S3)', to: routes.FileUploadRoute.to },
+  { name: 'TikTok Integration', to: routes.TikTokIntegrationRoute.to },
   { name: 'Pricing', to: routes.PricingPageRoute.to },
   { name: 'Documentation', to: DocsUrl },
   { name: 'Blog', to: BlogUrl },
